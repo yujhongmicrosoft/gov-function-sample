@@ -3,11 +3,10 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "app-planName": {
-            "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "type": "String"
         },
         "app-planSkuName": {
-            "type": "string",
             "defaultValue": "F1",
             "allowedValues": [
                 "F1",
@@ -23,12 +22,12 @@
                 "P3",
                 "P4"
             ],
+            "type": "String",
             "metadata": {
                 "description": "Describes plan's pricing tier and capacity. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
             }
         },
         "webAppStorageType": {
-            "type": "string",
             "defaultValue": "Standard_LRS",
             "allowedValues": [
                 "Standard_LRS",
@@ -36,7 +35,8 @@
                 "Standard_GRS",
                 "Standard_RAGRS",
                 "Premium_LRS"
-            ]
+            ],
+            "type": "String"
         }
     },
     "variables": {
@@ -44,34 +44,31 @@
         "storageAccountName": "[concat('appstorage', uniqueString(resourceGroup().id))]",
         "cosmosDbAccountName": "[concat('db-', uniqueString(resourceGroup().id))]",
         "cosmosOfferType": "Standard",
-        "appServicePlanName": "[concat('app-plan-', uniqueString(resourceGroup().id))]",
+        "appServicePlanName": "[concat('app-plan-', uniqueString(resourceGroup().id))]"
     },
     "resources": [
         {
-            "name": "[variables('appServicePlanName')]",
             "type": "Microsoft.Web/serverfarms",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2015-08-01",
             "sku": {
                 "name": "[parameters('app-planSkuName')]"
             },
-            "dependsOn": [],
+            "name": "[variables('appServicePlanName')]",
+            "apiVersion": "2015-08-01",
+            "location": "[resourceGroup().location]",
             "tags": {
                 "displayName": "app-service-plan"
             },
             "properties": {
                 "name": "[variables('appServicePlanName')]",
                 "numberOfWorkers": 1
-            }
+            },
+            "dependsOn": []
         },
         {
-            "name": "[variables('webAppName')]",
             "type": "Microsoft.Web/sites",
-            "location": "[resourceGroup().location]",
+            "name": "[variables('webAppName')]",
             "apiVersion": "2015-08-01",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
-            ],
+            "location": "[resourceGroup().location]",
             "tags": {
                 "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "Resource",
                 "displayName": "primary-web-app"
@@ -85,15 +82,9 @@
             },
             "resources": [
                 {
-                    "name": "appsettings",
                     "type": "config",
+                    "name": "appsettings",
                     "apiVersion": "2015-08-01",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('webAppName'), 'web')]",
-                        "[resourceId('Microsoft.Web/sites', variables('webAppName'))]",
-                        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosDbAccountName'))]",
-                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-                    ],
                     "tags": {
                         "displayName": "appsettings"
                     },
@@ -103,43 +94,56 @@
                         "GovModeratorConfig:StorageConfig:EndpointSuffix": "core.usgovcloudapi.net",
                         "GovModeratorConfig:CosmosDbConfig:EndpointUri": "[reference(concat('Microsoft.DocumentDb/databaseAccounts/', variables('cosmosDbAccountName'))).documentEndpoint]",
                         "GovModeratorConfig:CosmosDbConfig:PrimaryKey": "[listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', variables('cosmosDbAccountName')), '2015-04-08').primaryMasterKey]"
-                    }
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites/sourcecontrols', variables('webAppName'), 'web')]",
+                        "[resourceId('Microsoft.Web/sites', variables('webAppName'))]",
+                        "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmosDbAccountName'))]",
+                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+                    ]
                 },
                 {
-                    "apiVersion": "2015-08-01",
-                    "name": "web",
                     "type": "sourcecontrols",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
-                    ],
+                    "name": "web",
+                    "apiVersion": "2015-08-01",
                     "properties": {
-                        "RepoUrl": "https://github.com/yujhongmicrosoft/gov-function-sample.git",
+                        "RepoUrl": "https://github.com/yujhongmicrosoft/gov-function-sample-webapp.git",
                         "branch": "master",
                         "IsManualIntegration": true
-                    }
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', variables('webAppName'))]"
+                    ]
                 }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
             ]
         },
         {
-            "name": "[variables('storageAccountName')]",
             "type": "Microsoft.Storage/storageAccounts",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2016-01-01",
             "sku": {
                 "name": "[parameters('webAppStorageType')]"
             },
-            "dependsOn": [],
+            "kind": "Storage",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2016-01-01",
+            "location": "[resourceGroup().location]",
             "tags": {
                 "displayName": "webAppStorage"
             },
-            "kind": "Storage"
+            "dependsOn": []
         },
         {
-            "apiVersion": "2015-04-08",
             "type": "Microsoft.DocumentDB/databaseAccounts",
             "kind": "GlobalDocumentDB",
             "name": "[variables('cosmosDbAccountName')]",
+            "apiVersion": "2015-04-08",
             "location": "[resourceGroup().location]",
+            "tags": {
+                "defaultExperience": "SQL",
+                "displayName": "CosmosDB"
+            },
             "properties": {
                 "name": "[variables('cosmosDbAccountName')]",
                 "databaseAccountOfferType": "[variables('cosmosOfferType')]",
@@ -158,10 +162,6 @@
                         "name": "SQL"
                     }
                 ]
-            },
-            "tags": {
-                "defaultExperience": "SQL",
-                "displayName": "CosmosDB"
             }
         }
     ],
