@@ -5,9 +5,6 @@ author: yujhong
 ---
 
 # Azure Government Functions Sample
-<a href="https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fyujhongmicrosoft%2Fgov-function-sample%2Fmaster%2Fazuretest.json" target="_blank">
-    <img src="http://azuredeploy.net/AzureGov.png" />
-</a> 
 
 ### Description 
 This sample consists of an Azure Functions application as well as a Asp.net Core Web application.
