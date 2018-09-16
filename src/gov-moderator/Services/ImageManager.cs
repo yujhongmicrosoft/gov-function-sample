@@ -33,27 +33,15 @@ namespace gov_moderator.Services
             var collection = new DocumentCollection { Id = DocDbNames.Images };
             collection.IndexingPolicy = new IndexingPolicy(new RangeIndex(DataType.String) { Precision = -1 });
             await this.docClient.CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(DocDbNames.DbName), collection);
-
         }
+
         public async Task<List<ImageFile>> GetImages()
         {
             var uri = DocDbNames.Images.ToDocCollectionUri();
             var query = this.docClient.CreateDocumentQuery<ImageFile>(DocDbNames.Images.ToDocCollectionUri())
-               // .OrderBy(x => x.Created)
+                .OrderBy(x => x.Created)
                 .AsDocumentQuery();
-            //  var query = this.docClient.CreateDocumentQuery<ImageFile>(DocDbNames.Images.ToDocCollectionUri(),
-            //     "SELECT * FROM c ORDER BY c.created");
-            var result = await ExecuteFullQuery<ImageFile>(query);
-         //   return await ExecuteFullQuery<ImageFile>(query);
-
-
-
-            ////var client = new DocumentClient(new Uri("https://db-jm6wvhgmuf22g.documents.azure.us:443/"), "704FXrXSwwffrbZg6BXgfmuej1MBMHdk8Ym849ZA0xRIBCLyvLb7h96dWVo8JF5HQiaLGORcoXU5AlzVrQXmQQ==");
-            ////var query = client.CreateDocumentQuery(uri, "SELECT * FROM c ORDER BY c.created");
-            ////var result = query.ToList();
-
-            return result;
-
+            return await ExecuteFullQuery<ImageFile>(query);
         }
 
         public async Task<ImageFile> GetImage(string id)
