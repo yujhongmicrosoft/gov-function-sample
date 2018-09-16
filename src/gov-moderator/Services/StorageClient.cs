@@ -23,7 +23,7 @@ namespace gov_moderator.Services
         {
             var container = blobClient.GetContainerReference("images");
             await container.CreateIfNotExistsAsync();
-            //await container.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
+            await container.SetPermissionsAsync(new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob });
 
             var blockBlob = container.GetBlockBlobReference(blobName);
             blockBlob.Properties.ContentType = blob.ContentType;

@@ -30,19 +30,35 @@ namespace gov_moderator.Services
         public async Task Initialize()
         {
             await this.docClient.CreateDatabaseIfNotExistsAsync(new Database { Id = DocDbNames.DbName });
-            await this.docClient.CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(DocDbNames.DbName), new DocumentCollection { Id = DocDbNames.Images });
+            var collection = new DocumentCollection { Id = DocDbNames.Images };
+            collection.IndexingPolicy = new IndexingPolicy(new RangeIndex(DataType.String) { Precision = -1 });
+            await this.docClient.CreateDocumentCollectionIfNotExistsAsync(UriFactory.CreateDatabaseUri(DocDbNames.DbName), collection);
 
         }
         public async Task<List<ImageFile>> GetImages()
         {
-            IDocumentQuery<ImageFile> query = this.docClient.CreateDocumentQuery<ImageFile>(DocDbNames.Images.ToDocCollectionUri())
-                .OrderBy(x => x.Created)
+            var uri = DocDbNames.Images.ToDocCollectionUri();
+            var query = this.docClient.CreateDocumentQuery<ImageFile>(DocDbNames.Images.ToDocCollectionUri())
+               // .OrderBy(x => x.Created)
                 .AsDocumentQuery();
-            return await ExecuteFullQuery<ImageFile>(query);
+            //  var query = this.docClient.CreateDocumentQuery<ImageFile>(DocDbNames.Images.ToDocCollectionUri(),
+            //     "SELECT * FROM c ORDER BY c.created");
+            var result = await ExecuteFullQuery<ImageFile>(query);
+         //   return await ExecuteFullQuery<ImageFile>(query);
+
+
+
+            ////var client = new DocumentClient(new Uri("https://db-jm6wvhgmuf22g.documents.azure.us:443/"), "704FXrXSwwffrbZg6BXgfmuej1MBMHdk8Ym849ZA0xRIBCLyvLb7h96dWVo8JF5HQiaLGORcoXU5AlzVrQXmQQ==");
+            ////var query = client.CreateDocumentQuery(uri, "SELECT * FROM c ORDER BY c.created");
+            ////var result = query.ToList();
+
+            return result;
+
         }
 
         public async Task<ImageFile> GetImage(string id)
         {
+            var uri = DocDbNames.Images.ToDocUri(id);
             var img = await this.docClient.ReadDocumentAsync<ImageFile>(DocDbNames.Images.ToDocUri(id));
             return img;
         }
